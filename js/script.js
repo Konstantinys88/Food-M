@@ -209,35 +209,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    new CardMenu(
-        'img/tabs/vegy.jpg',
-        'vegy',
-        'Меню "Фитнес"',
-        'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-        100,
-        '.menu .container',
-        // 'menu__item',
-    ).render();
+    const getResource = async (url) => {
+        const res = await fetch(url);
 
-    new CardMenu(
-        'img/tabs/elite.jpg',
-        'elite',
-        'Меню “Премиум”',
-        'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-        150,
-        '.menu .container',
-        'menu__item',
-    ).render();
+        if (!res.ok) {
+            throw new Error(`Все пропало ${url}, статус ${res.status}`);
+        }
 
-    new CardMenu(
-        'img/tabs/post.jpg',
-        'vegy',
-        'Меню "Постное"',
-        'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-        120,
-        '.menu .container',
-        'menu__item',
-    ).render();
+        return await res.json();
+    };
+
+    getResource('http://localhost:3000/menu')
+        .then(data => {
+            data.forEach(item => {
+                new CardMenu(
+                    item.img,
+                    item.altimg,
+                    item.title,
+                    item.descr,
+                    item.price,
+                    '.menu .container',
+                    'menu__item',
+                ).render();
+            });
+        });
+
 
     //forms
 
@@ -246,14 +242,26 @@ document.addEventListener('DOMContentLoaded', () => {
         loading: 'img/spinner.svg',
         success: 'Спасибо! Скоро мы с вами свяжемся!',
         failure: 'Что-то пошло не так...',
-    }
+    };
 
     forms.forEach(item => {
-        postData(item);
-    })
+        bindPostData(item);
+    });
+
+    const postData = async (url, data) => {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: data
+        });
+        return await res.json();
+    };
 
 
-    function postData(form) {
+
+    function bindPostData(form) {
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -274,24 +282,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 object[key] = value;
             });
 
+            const json = JSON.stringify(Object.fromEntries(formData.entries()));
 
-            fetch('server.php', {
-                method: 'POST',
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(object),
-            }).then(data => data.text()).then(data => {
-                console.log(data);
-                showThanksModal(message.success);
-                statusMessage.remove();
-            }).catch(() => {
-                showThanksModal(message.failure);
-            }).finally(() => {
-                form.reset();
-            });
+            postData('http://localhost:3000/requests', json)
+                .then(data => {
+                    // console.log(data);
+                    showThanksModal(message.success);
+                    statusMessage.remove();
+                }).catch(() => {
+                    showThanksModal(message.failure);
+                }).finally(() => {
+                    form.reset();
+                });
         });
-    }
+    };
 
     function showThanksModal(message) {
         const prevModalDialog = document.querySelector('.modal__dialog');
@@ -315,11 +319,18 @@ document.addEventListener('DOMContentLoaded', () => {
             prevModalDialog.classList.remove('hide');
             closeModal();
         }, 4000)
-    }
+    };
+
+    fetch('db.json')
+        .then(data => data.json())
+        .then(res => console.log(res));
 
 
 
 });
+
+
+// npx json-server db.json
 
 
 

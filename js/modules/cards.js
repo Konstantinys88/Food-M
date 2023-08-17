@@ -1,3 +1,4 @@
+import { getResource } from "../services/services";
 
 function cards() {
     
@@ -47,16 +48,6 @@ function cards() {
         }
     }
 
-    const getResource = async (url) => {
-        const res = await fetch(url);
-
-        if (!res.ok) {
-            throw new Error(`Все пропало ${url}, статус ${res.status}`);
-        }
-
-        return await res.json();
-    };
-
     getResource('http://localhost:3000/menu')
         .then(data => {
             data.forEach(item => {
@@ -73,4 +64,4 @@ function cards() {
         });
 }
 
-module.exports = cards;
+export default cards;
